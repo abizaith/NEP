@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>NEP GPS Collector</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#1a56db;--bluedark:#1e3a8a;--bluel:#dbeafe;
+  --green:#059669;--greenl:#d1fae5;
+  --amber:#d97706;--amberl:#fef3c7;
+  --red:#dc2626;--redl:#fee2e2;
+  --g50:#f9fafb;--g100:#f3f4f6;--g200:#e5e7eb;
+  --g400:#9ca3af;--g500:#6b7280;--g600:#4b5563;--g900:#111827;
+  --wa:#25d366;--wadark:#128c7e;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:var(--g50);color:var(--g900);min-height:100vh;padding:0 0 40px}
+.hdr{background:var(--bluedark);padding:16px;display:flex;align-items:center;gap:10px}
+.hdr-ico{font-size:22px}
+.hdr-info strong{display:block;font-size:16px;color:#fff;font-weight:600}
+.hdr-info small{font-size:11px;color:rgba(255,255,255,.6)}
+.page{padding:14px;max-width:480px;margin:0 auto}
+.card{background:#fff;border-radius:14px;border:1px solid var(--g200);padding:18px;margin-bottom:14px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-title{font-size:15px;font-weight:600;margin-bottom:4px;color:var(--g900)}
+.card-desc{font-size:13px;color:var(--g500);line-height:1.55;margin-bottom:16px}
+.lbl{font-size:12px;font-weight:600;color:var(--g500);margin-bottom:5px;display:block}
+.inp{width:100%;padding:11px 13px;border:1px solid var(--g200);border-radius:9px;font-size:15px;font-family:inherit;background:var(--g50);outline:none;color:var(--g900);transition:border-color .15s,box-shadow .15s;margin-bottom:12px}
+.inp:focus{border-color:var(--blue);background:#fff;box-shadow:0 0 0 3px rgba(26,86,219,.1)}
+.inp::placeholder{color:var(--g400)}
+.capbtn{width:100%;padding:18px;background:var(--blue);color:#fff;border:none;border-radius:12px;font-size:17px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;letter-spacing:-.01em}
+.capbtn:disabled{background:#93c5fd;cursor:not-allowed}
+.capbtn:not(:disabled):active{background:var(--bluedark);transform:scale(.98)}
+.gbox{margin-top:14px;border-radius:11px;padding:14px;display:none}
+.gbox.ok{background:var(--greenl);border:1px solid #a7f3d0}
+.gbox.err{background:var(--redl);border:1px solid #fca5a5}
+.grow{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.07)}
+.grow:last-child{border:none;padding-bottom:0}
+.gkey{font-size:12px;font-weight:700;color:#065f46;text-transform:uppercase;letter-spacing:.04em}
+.gval{font-family:monospace;font-size:14px;font-weight:600;color:#064e3b}
+.errtxt{font-size:13px;color:var(--red);line-height:1.6}
+.accpill{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:700}
+.acg{background:var(--greenl);color:#065f46}
+.acy{background:var(--amberl);color:#92400e}
+.acr{background:var(--redl);color:#991b1b}
+.maps-link{display:flex;align-items:center;gap:8px;padding:11px 14px;background:#e8f5e9;border:1px solid #a5d6a7;border-radius:9px;text-decoration:none;color:#1b5e20;font-size:13px;font-weight:600;margin-top:10px;transition:background .12s}
+.maps-link:active{background:#c8e6c9}
+.maps-arrow{font-size:16px}
+.wabtn{width:100%;padding:17px;background:var(--wa);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:10px;transition:background .15s;margin-top:6px}
+.wabtn:disabled{background:#86efb8;cursor:not-allowed;color:rgba(255,255,255,.7)}
+.wabtn:not(:disabled):active{background:var(--wadark);transform:scale(.98)}
+.wa-ico{width:24px;height:24px;fill:#fff;flex-shrink:0}
+.preview-box{background:var(--g50);border:1px solid var(--g200);border-radius:9px;padding:11px 13px;font-size:13px;color:var(--g600);line-height:1.6;margin-bottom:12px;display:none;word-break:break-word}
+.preview-box strong{color:var(--g900)}
+.tip{background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:11px 13px;margin-top:12px}
+.tip p{font-size:12px;color:#1e40af;line-height:1.7}
+.step-row{display:flex;gap:10px;align-items:flex-start;margin-bottom:8px}
+.step-n{width:22px;height:22px;border-radius:50%;background:var(--blue);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-txt{font-size:13px;color:var(--g700);line-height:1.5}
+.step-txt strong{color:var(--g900);font-weight:600}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--g900);color:#fff;padding:10px 20px;border-radius:10px;font-size:13px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.toast.show{opacity:1}
+.recv-note{font-size:12px;color:var(--g400);text-align:center;margin-top:8px}
+.badge-sent{display:none;background:var(--greenl);border:1px solid #a7f3d0;border-radius:9px;padding:12px 14px;text-align:center;margin-top:10px;font-size:13px;color:#065f46;font-weight:600}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <span class="hdr-ico">📍</span>
+  <div class="hdr-info">
+    <strong>NEP GPS Collector</strong>
+    <small>UNICEF Liberia · Field Data Collection</small>
+  </div>
+</header>
+
+<div class="page">
+
+  <!-- STEP 1 — Name -->
+  <div class="card">
+    <div class="card-title">Step 1 — Facility / School name</div>
+    <p class="card-desc">Enter the exact name of the institution you are standing at right now.</p>
+    <label class="lbl" for="instName">Name of Institution</label>
+    <input class="inp" id="instName" type="text" placeholder="e.g. AF Russell Clinic" autocomplete="off" oninput="onNameInput()">
+    <label class="lbl" for="county">County</label>
+    <input class="inp" id="county" type="text" placeholder="e.g. Montserrado" autocomplete="off" oninput="onNameInput()">
+  </div>
+
+  <!-- STEP 2 — GPS -->
+  <div class="card">
+    <div class="card-title">Step 2 — Capture GPS location</div>
+    <p class="card-desc">Stand <strong>outside</strong> the building, away from walls. Keep mobile data ON for best accuracy.</p>
+    <button class="capbtn" id="capBtn" onclick="captureGPS()">
+      <span id="capIco">📍</span>
+      <span id="capTxt">Get My Location</span>
+    </button>
+    <div class="gbox" id="gpsBox">
+      <div class="grow"><span class="gkey">Latitude</span><span class="gval" id="gLat">—</span></div>
+      <div class="grow"><span class="gkey">Longitude</span><span class="gval" id="gLon">—</span></div>
+      <div class="grow"><span class="gkey">Location</span><span class="gval" id="gStr">—</span></div>
+      <div class="grow"><span class="gkey">Accuracy</span><span class="accpill" id="gAcc">—</span></div>
+    </div>
+    <!-- Google Maps verify link -->
+    <a class="maps-link" id="mapsLink" href="#" target="_blank" style="display:none" onclick="openMaps(event)">
+      <span class="maps-arrow">🗺</span>
+      Verify on Google Maps
+    </a>
+    <div class="tip">
+      <p>
+        <strong>For best GPS accuracy on mobile:</strong><br>
+        • Stand outdoors, clear of buildings and trees<br>
+        • Enable location + mobile data (not Wi-Fi only)<br>
+        • Wait 5–10 seconds after tapping the button<br>
+        • Aim for accuracy below 15 m (green badge)<br>
+        • Tap again to refresh if accuracy is poor
+      </p>
+    </div>
+  </div>
+
+  <!-- STEP 3 — Send -->
+  <div class="card">
+    <div class="card-title">Step 3 — Send via WhatsApp</div>
+    <p class="card-desc">Review the message below, then tap Send to share directly with the NEP coordinator.</p>
+    <div class="preview-box" id="previewBox"></div>
+    <button class="wabtn" id="waBtn" disabled onclick="sendWhatsApp()">
+      <svg class="wa-ico" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.115.549 4.1 1.509 5.827L.057 23.032a.75.75 0 00.916.916l5.205-1.452A11.953 11.953 0 0012 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 22c-1.907 0-3.688-.501-5.228-1.375l-.374-.218-3.879 1.082 1.082-3.879-.218-.374A9.953 9.953 0 012 12C2 6.486 6.486 2 12 2s10 4.486 10 10-4.486 10-10 10z"/></svg>
+      Send to Coordinator
+    </button>
+    <div class="recv-note">Message will go to: +250 788 800 811</div>
+    <div class="badge-sent" id="sentBadge">✅ WhatsApp opened! Complete sending in the WhatsApp app.</div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="card">
+    <div class="card-title">How to use this tool</div>
+    <div style="margin-top:10px">
+      <div class="step-row"><span class="step-n">1</span><span class="step-txt">Type the <strong>name of the facility or school</strong> and its county above</span></div>
+      <div class="step-row"><span class="step-n">2</span><span class="step-txt">Tap <strong>Get My Location</strong> — stand outside for best GPS signal</span></div>
+      <div class="step-row"><span class="step-n">3</span><span class="step-txt">Check the <strong>accuracy badge</strong> — green is good, amber is ok, red = move outdoors and try again</span></div>
+      <div class="step-row"><span class="step-n">4</span><span class="step-txt">Tap <strong>Verify on Google Maps</strong> to confirm the pin is at the right place</span></div>
+      <div class="step-row"><span class="step-n">5</span><span class="step-txt">Tap <strong>Send to Coordinator</strong> — WhatsApp will open with the message pre-filled. Just tap Send.</span></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WA_NUMBER = '250788800811';
+let capLat = null, capLon = null;
+
+function captureGPS() {
+  if (!navigator.geolocation) { showToast('Geolocation not supported on this device.'); return; }
+  const btn = document.getElementById('capBtn');
+  const ico = document.getElementById('capIco');
+  const txt = document.getElementById('capTxt');
+  btn.disabled = true; ico.textContent = '⏳'; txt.textContent = 'Getting location…';
+
+  navigator.geolocation.getCurrentPosition(
+    pos => {
+      const la  = pos.coords.latitude.toFixed(6);
+      const lo  = pos.coords.longitude.toFixed(6);
+      const acc = Math.round(pos.coords.accuracy);
+      capLat = la; capLon = lo;
+
+      document.getElementById('gLat').textContent = la;
+      document.getElementById('gLon').textContent = lo;
+      document.getElementById('gStr').textContent = la + ', ' + lo;
+
+      const ap = document.getElementById('gAcc');
+      if (acc < 20) { ap.textContent = '± ' + acc + ' m — Good'; ap.className = 'accpill acg'; }
+      else if (acc < 60) { ap.textContent = '± ' + acc + ' m — OK'; ap.className = 'accpill acy'; }
+      else { ap.textContent = '± ' + acc + ' m — Move outdoors'; ap.className = 'accpill acr'; }
+
+      const box = document.getElementById('gpsBox');
+      box.className = 'gbox ok'; box.style.display = 'block';
+
+      const mlink = document.getElementById('mapsLink');
+      mlink.style.display = 'flex';
+      mlink.dataset.la = la; mlink.dataset.lo = lo;
+
+      btn.disabled = false; ico.textContent = '✅'; txt.textContent = 'Captured — tap to refresh';
+      updatePreview();
+      showToast('📍 Location captured! Accuracy: ±' + acc + 'm');
+    },
+    err => {
+      btn.disabled = false; ico.textContent = '📍'; txt.textContent = 'Get My Location';
+      const box = document.getElementById('gpsBox');
+      box.className = 'gbox err'; box.style.display = 'block';
+      const msgs = {
+        1: 'Permission denied — tap the 🔒 icon in your browser address bar, allow Location, then reload.',
+        2: 'No GPS signal — move outdoors away from buildings, ensure mobile data is ON.',
+        3: 'Request timed out — move outdoors and try again.'
+      };
+      box.innerHTML = '<p class="errtxt"><strong>' + gpsErrTitle(err) + '</strong><br>' + (msgs[err.code] || 'Unknown error. Try reloading.') + '</p>';
+    },
+    { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+  );
+}
+
+function gpsErrTitle(e) {
+  return ['','Permission denied','Position unavailable','Timeout'][e.code] || 'Error';
+}
+
+function openMaps(e) {
+  e.preventDefault();
+  const la = e.currentTarget.dataset.la;
+  const lo = e.currentTarget.dataset.lo;
+  if (!la || !lo) return;
+  const url = 'https://www.google.com/maps?q=' + la + ',' + lo + '&z=18&t=h';
+  window.open(url, '_blank');
+}
+
+function onNameInput() { updatePreview(); }
+
+function updatePreview() {
+  const name   = (document.getElementById('instName').value || '').trim();
+  const county = (document.getElementById('county').value || '').trim();
+  const box    = document.getElementById('previewBox');
+  const waBtn  = document.getElementById('waBtn');
+
+  if (!name || !capLat) {
+    box.style.display = 'none';
+    waBtn.disabled = true;
+    return;
+  }
+
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const msg     = buildMessage(name, county, dateStr, timeStr);
+
+  box.style.display = 'block';
+  box.innerHTML = msg.replace(/\n/g, '<br>');
+  waBtn.disabled = false;
+}
+
+function buildMessage(name, county, dateStr, timeStr) {
+  return '*NEP GPS Location Report*\n' +
+    '-----------------------------\n' +
+    '*Institution:* ' + name + '\n' +
+    (county ? '*County:* ' + county + '\n' : '') +
+    '*Latitude:* ' + capLat + '\n' +
+    '*Longitude:* ' + capLon + '\n' +
+    '*Location:* ' + capLat + ', ' + capLon + '\n' +
+    '*Google Maps:* https://www.google.com/maps?q=' + capLat + ',' + capLon + '&z=18&t=h\n' +
+    '-----------------------------\n' +
+    'Collected: ' + dateStr + ' at ' + timeStr;
+}
+
+function sendWhatsApp() {
+  const name   = (document.getElementById('instName').value || '').trim();
+  const county = (document.getElementById('county').value || '').trim();
+  if (!name)   { showToast('Please enter the institution name first.'); return; }
+  if (!capLat) { showToast('Please capture the GPS location first.'); return; }
+
+  const now     = new Date();
+  const dateStr = now.toLocaleDateString('en-GB', { day:'2-digit', month:'short', year:'numeric' });
+  const timeStr = now.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit' });
+  const msg     = buildMessage(name, county, dateStr, timeStr);
+  const url     = 'https://wa.me/' + WA_NUMBER + '?text=' + encodeURIComponent(msg);
+
+  window.open(url, '_blank');
+  document.getElementById('sentBadge').style.display = 'block';
+  showToast('✅ WhatsApp opened — tap Send to submit!');
+}
+
+let _tt;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(_tt);
+  _tt = setTimeout(() => el.classList.remove('show'), 3500);
+}
+</script>
+</body>
+</html>
